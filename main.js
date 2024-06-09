@@ -4,7 +4,6 @@ import cors from 'cors';
 import multer from 'multer';
 import PostService from './post.service.js';
 import TelegramService from './telegram.service.js';
-import { registerUser } from './register.service.js';
 
 const app = express();
 const port = 3000;

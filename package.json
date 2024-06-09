@@ -5,11 +5,14 @@
     "axios": "^1.7.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+    "cron": "^3.1.7",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",
+    "instagram-private-api": "^1.46.1",
     "multer": "^1.4.5-lts.1",
+    "request-promise": "^4.2.6",
     "telegraf": "^4.16.3"
   }
 }
