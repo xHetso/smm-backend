@@ -5,13 +5,13 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
-export default class PostService {
+export default class PostCleanService {
     async processPost(postData) {
         const model = genAI.getGenerativeModel({ model: "gemini-pro"});
 
         console.log('Получены данные:', postData);
         const promptUser = postData.title;
-        const prompt = `Нужен сделать только один креативный пост для телеграмма, вот каким должен быть Post:, ${promptUser}`;
+        const prompt = `${promptUser}`;
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();

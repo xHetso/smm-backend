@@ -6,17 +6,39 @@ import fs from 'fs';
 import path from 'path';
 import PostService from './post.service.js';
 import TelegramService from './telegram.service.js';
+import VisionService from './post-view-img.service.js';
 
 const app = express();
 const port = 3000;
 
-const upload = multer();
+// Создание директории uploads, если она не существует
+const uploadDir = './uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Настройка хранилища для файлов с помощью multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // Папка, куда будут сохраняться файлы
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Имя файла будет текущая дата и время + расширение файла
+  }
+});
+
+// Multer для сохранения файлов на диск
+const uploadToDisk = multer({ storage: storage });
+
+// Multer для обработки файлов без сохранения их на диск
+const uploadMemory = multer();
 
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cors());
 
 const postService = new PostService();
+const visionService = new VisionService();
 
 // Загрузка пользователей из файла users.json
 const usersFilePath = './users.json';
@@ -50,6 +72,7 @@ app.post('/submit-post', async (req, res) => {
   try {
     const postData = req.body;
     const result = await postService.processPost(postData);
+    console.log('result post: ' + result);
     res.json(result); // Отправка результата в формате JSON
   } catch (error) {
     console.error('Ошибка при обработке поста:', error);
@@ -57,7 +80,32 @@ app.post('/submit-post', async (req, res) => {
   }
 });
 
-app.post('/send-to-telegram', upload.single('photo'), async (req, res) => {
+// Новый маршрут для обработки загрузки файлов
+app.post('/submit-post-view-img', uploadToDisk.single('file'), async (req, res) => {
+  try {
+    const { title } = req.body;
+    const file = req.file;
+
+    if (!title || !file) {
+      return res.status(400).json({ message: 'Title and file are required' });
+    }
+
+    console.log('Title:', title);
+    console.log('File:', file);
+
+    const resultImage = (await visionService.processImage(file.path, title, file.mimetype));
+    console.log('11111111111111'+resultImage.message);
+    const result = await postService.processPost("На картинки изображена:" + resultImage.message + ".Придумай пост для этой картинки, напиши об этой картинке текст" );
+    console.log('result: ' + JSON.stringify(result, null, 2));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Ошибка при загрузке файла:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.post('/send-to-telegram', uploadMemory.single('photo'), async (req, res) => {
   try {
     const telegramMessage = req.body.message;
     const chatId = '1102971924'; // Ваш chatId
